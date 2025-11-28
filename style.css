@@ -1,0 +1,40 @@
+/* כל ה-CSS מהקוד המקורי - העתק את כל התוכן מה-style tag */
+:root {
+  --bg: #0f172a;
+  --bg-alt: #1e293b;
+  --card-bg: #1e293b;
+  --card-alt: #334155;
+  --green-dark: #059669;
+  --green-light: #10b981;
+  --red: #ef4444;
+  --orange: #f59e0b;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-soft: #475569;
+  --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --radius-card: 16px;
+  --radius-small: 8px;
+  --transition-fast: 0.2s ease-out;
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  color: var(--text-main);
+  line-height: 1.6;
+  min-height: 100vh;
+  direction: rtl;
+}
+
+/* המשך כל ה-CSS המקורי... */
+/* העתק את כל התוכן מה-style tag לקובץ הזה */
