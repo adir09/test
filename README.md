@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
@@ -8,8 +7,8 @@
   <meta name="keywords" content="מורים, משוב, חינוך, ישראל, תלמידים">
   <meta name="author" content="שם שלך">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* CSS מקוצר - כולל את כל החלקים החיוניים */
     :root {
       --bg: #0f172a;
       --bg-alt: #1e293b;
@@ -885,7 +884,7 @@
         <div class="login-sub">
           אתה יכול לכתוב כל שם משתמש וכל סיסמה – המערכת תשמור אותם במחשב שלך.<br>
           לדוגמה: <b>תלמיד</b> או כל שם אחר שבא לך.<br>
-          רק אם תכתוב <b>adir</b> עם סיסמה <b>1234</b> – תיכנס כאדמין.
+       
         </div>
 
         <div class="form-field">
@@ -912,11 +911,11 @@
         <div style="margin-top: 16px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3);">
           <div style="font-size: 12px; color: #93c5fd; display: flex; align-items: center; gap: 6px;">
             <i class="fas fa-cloud"></i>
-            <span>המערכת משתמשת ב-localStorage - כל המשובים נשמרים בדפדפן שלך!</span>
+            <span>המערכת מחוברת ל-Supabase - כל המשובים נשמרים ונראים לכל המשתמשים!</span>
           </div>
           <div id="sync-status" class="sync-status sync-online">
             <i class="fas fa-database"></i>
-            <span>נתונים נשמרים מקומית</span>
+            <span>מחובר - נתונים משותפים</span>
           </div>
         </div>
       </div>
@@ -1207,7 +1206,7 @@
           </button>
           <div class="admin-note">
             <i class="fas fa-info-circle"></i>
-            <span>הנתונים נשמרים בדפדפן שלך בלבד.</span>
+            <span>הנתונים נשמרים ב-Supabase ונראים לכל המשתמשים.</span>
           </div>
         </div>
 
@@ -1225,8 +1224,12 @@
 </div>
 
 <script>
-  // ---------- הגדרות ----------
-  const STORAGE_KEY = 'teacher_feedback_system_data';
+  // ---------- הגדרות Supabase ----------
+  const SUPABASE_URL = 'https://xidfthnboggokcsloglt.supabase.co'; // החלף ב-URL האמיתי שלך
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhpZGZ0aG5ib2dnb2tjc2xvZ2x0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzMTIwNzUsImV4cCI6MjA3OTg4ODA3NX0.fEPS2FJYlcZ4DOv7I0RBEcwZBfT0MdRGslk9cp_2GwU'; // החלף ב-anon key האמיתי שלך
+
+  // אתחול Supabase
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ---------- נתונים גלובליים ----------
   let teachers = [];
@@ -1247,35 +1250,50 @@
   };
 
   // ---------- פונקציות שמירה וטעינה ----------
-  function loadData() {
+  async function loadData() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        teachers = data.teachers || [
-          { id: 1, name: "אורן", subject: "אנגלית" },
-          { id: 2, name: "אורית", subject: "מתמטיקה" },
-          { id: 3, name: "רעות", subject: "לשון" },
-          { id: 4, name: "אבי", subject: "השכלה כללית" },
-          { id: 5, name: "נטע", subject: "היסטוריה" }
-        ];
-        feedbackEntries = data.feedback || [];
-        studentStats = data.studentStats || {};
-      } else {
-        // נתוני ברירת מחדל
-        teachers = [
-          { id: 1, name: "אורן", subject: "אנגלית" },
-          { id: 2, name: "אורית", subject: "מתמטיקה" },
-          { id: 3, name: "רעות", subject: "לשון" },
-          { id: 4, name: "אבי", subject: "השכלה כללית" },
-          { id: 5, name: "נטע", subject: "היסטוריה" }
-        ];
-        feedbackEntries = [];
-        studentStats = {};
+      // טען מורים
+      const { data: teachersData, error: teachersError } = await supabase
+        .from('teachers')
+        .select('*')
+        .order('id');
+      
+      if (teachersError) throw teachersError;
+      teachers = teachersData || [];
+
+      // טען משובים
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from('feedback')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (feedbackError) throw feedbackError;
+      feedbackEntries = feedbackData || [];
+
+      // טען סטטיסטיקות
+      const { data: statsData, error: statsError } = await supabase
+        .from('student_stats')
+        .select('*');
+      
+      if (statsError) throw statsError;
+      
+      // המר את הסטטיסטיקות לאובייקט
+      studentStats = {};
+      if (statsData) {
+        statsData.forEach(stat => {
+          studentStats[stat.user_name] = {
+            compliments: stat.compliments,
+            remarks: stat.remarks
+          };
+        });
       }
+
       updateSyncStatus(true);
+      console.log('✅ נתונים נטענו בהצלחה');
+
     } catch (error) {
-      console.log('❌ שגיאה בטעינת הנתונים, משתמשים בנתוני ברירת מחדל');
+      console.error('❌ שגיאה בטעינת נתונים:', error);
+      // נתוני ברירת מחדל במקרה של שגיאה
       teachers = [
         { id: 1, name: "אורן", subject: "אנגלית" },
         { id: 2, name: "אורית", subject: "מתמטיקה" },
@@ -1289,17 +1307,143 @@
     }
   }
 
-  function saveAllData() {
+  async function saveFeedback(feedback) {
     try {
-      const data = { teachers, feedbackEntries, studentStats };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      updateSyncStatus(true);
+      const { data, error } = await supabase
+        .from('feedback')
+        .insert([
+          {
+            teacher_id: feedback.teacherId,
+            type: feedback.type,
+            tags: feedback.tags,
+            text: feedback.text,
+            user_name: feedback.user
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      // עדכן סטטיסטיקות
+      await updateStudentStats(feedback.user, feedback.type);
+      
       return true;
     } catch (error) {
-      console.log('❌ לא הצלחנו לשמור את הנתונים');
-      updateSyncStatus(false);
+      console.error('❌ שגיאה בשמירת משוב:', error);
       return false;
     }
+  }
+
+  async function updateStudentStats(userName, type) {
+    try {
+      // בדוק אם המשתמש כבר קיים
+      const { data: existingStat, error: checkError } = await supabase
+        .from('student_stats')
+        .select('*')
+        .eq('user_name', userName)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') throw checkError;
+
+      if (existingStat) {
+        // עדכן סטטיסטיקה קיימת
+        const updateData = type === 'compliment' 
+          ? { compliments: existingStat.compliments + 1 }
+          : { remarks: existingStat.remarks + 1 };
+
+        const { error: updateError } = await supabase
+          .from('student_stats')
+          .update(updateData)
+          .eq('user_name', userName);
+
+        if (updateError) throw updateError;
+      } else {
+        // צור סטטיסטיקה חדשה
+        const newStat = {
+          user_name: userName,
+          compliments: type === 'compliment' ? 1 : 0,
+          remarks: type === 'remark' ? 1 : 0
+        };
+
+        const { error: insertError } = await supabase
+          .from('student_stats')
+          .insert([newStat]);
+
+        if (insertError) throw insertError;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ שגיאה בעדכון סטטיסטיקות:', error);
+      return false;
+    }
+  }
+
+  async function addTeacher(name, subject) {
+    try {
+      const { data, error } = await supabase
+        .from('teachers')
+        .insert([{ name, subject }])
+        .select();
+
+      if (error) throw error;
+      return data[0];
+    } catch (error) {
+      console.error('❌ שגיאה בהוספת מורה:', error);
+      return null;
+    }
+  }
+
+  async function deleteTeacher(teacherId) {
+    try {
+      // מחק תחילה את כל המשובים של המורה
+      const { error: feedbackError } = await supabase
+        .from('feedback')
+        .delete()
+        .eq('teacher_id', teacherId);
+
+      if (feedbackError) throw feedbackError;
+
+      // מחק את המורה
+      const { error: teacherError } = await supabase
+        .from('teachers')
+        .delete()
+        .eq('id', teacherId);
+
+      if (teacherError) throw teacherError;
+
+      return true;
+    } catch (error) {
+      console.error('❌ שגיאה במחיקת מורה:', error);
+      return false;
+    }
+  }
+
+  // ---------- האזנה לשינויים בזמן אמת ----------
+  function setupRealtimeUpdates() {
+    // האזן לשינויים במשובים
+    supabase
+      .channel('feedback-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'feedback' },
+        (payload) => {
+          console.log('שינוי במשובים:', payload);
+          loadData(); // טען מחדש את הנתונים
+        }
+      )
+      .subscribe();
+
+    // האזן לשינויים במורים
+    supabase
+      .channel('teachers-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'teachers' },
+        (payload) => {
+          console.log('שינוי במורים:', payload);
+          loadData(); // טען מחדש את הנתונים
+        }
+      )
+      .subscribe();
   }
 
   function updateSyncStatus(isOnline) {
@@ -1307,10 +1451,10 @@
     if (syncStatus) {
       if (isOnline) {
         syncStatus.className = 'sync-status sync-online';
-        syncStatus.innerHTML = '<i class="fas fa-database"></i><span>נתונים נשמרים מקומית</span>';
+        syncStatus.innerHTML = '<i class="fas fa-database"></i><span>מחובר - נתונים משותפים</span>';
       } else {
         syncStatus.className = 'sync-status sync-offline';
-        syncStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>בעיה בשמירת הנתונים</span>';
+        syncStatus.innerHTML = '<i class="fas fa-cloud-slash"></i><span>לא מחובר - נתונים מקומיים בלבד</span>';
       }
     }
   }
@@ -1335,7 +1479,7 @@
   }
 
   function getTeacherStats(id) {
-    const entries = feedbackEntries.filter(f => f.teacherId === id);
+    const entries = feedbackEntries.filter(f => f.teacher_id === id);
     const compliments = entries.filter(f => f.type === "compliment").length;
     const remarks = entries.filter(f => f.type === "remark").length;
     const score = compliments - remarks;
@@ -1437,8 +1581,8 @@
     document.getElementById("stat-behavior").textContent = stats.score > 0 ? '+' + stats.score : stats.score;
 
     const entries = feedbackEntries
-      .filter(f => f.teacherId === teacher.id)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+      .filter(f => f.teacher_id === teacher.id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     const listEl = document.getElementById("teacher-feedback-list");
     const emptyEl = document.getElementById("teacher-feedback-empty");
@@ -1460,11 +1604,11 @@
       item.innerHTML = `
         <div>${e.text || "<i>אין טקסט</i>"}</div>
         <div class="feedback-tags">
-          ${e.tags.map(tag => `<span class="tag-pill">${tag}</span>`).join("")}
+          ${e.tags ? e.tags.map(tag => `<span class="tag-pill">${tag}</span>`).join("") : ''}
         </div>
         <div class="feedback-meta-line">
-          <span>${e.type === "compliment" ? "👍 מחמאה" : "⚠️ הערה"} - ${e.user}</span>
-          <span>${formatDateShort(e.date)}</span>
+          <span>${e.type === "compliment" ? "👍 מחמאה" : "⚠️ הערה"} - ${e.user_name}</span>
+          <span>${formatDateShort(e.created_at)}</span>
         </div>
       `;
       listEl.appendChild(item);
@@ -1508,7 +1652,7 @@
   }
 
   function renderReportsScreen() {
-    const userEntries = feedbackEntries.filter(f => f.user === getDisplayNameForUser(appState.currentUser));
+    const userEntries = feedbackEntries.filter(f => f.user_name === getDisplayNameForUser(appState.currentUser));
     const totalCompliments = userEntries.filter(f => f.type === "compliment").length;
     const totalRemarks = userEntries.filter(f => f.type === "remark").length;
 
@@ -1517,7 +1661,7 @@
 
     // נתונים שבועיים
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const weekEntries = userEntries.filter(f => new Date(f.date) >= weekAgo);
+    const weekEntries = userEntries.filter(f => new Date(f.created_at) >= weekAgo);
     const weekCompliments = weekEntries.filter(f => f.type === "compliment").length;
     const weekRemarks = weekEntries.filter(f => f.type === "remark").length;
 
@@ -1549,21 +1693,21 @@
     latestContainer.style.display = "flex";
 
     const latest = userEntries
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       .slice(0, 5);
 
     latest.forEach(e => {
-      const teacher = getTeacherById(e.teacherId);
+      const teacher = getTeacherById(e.teacher_id);
       const item = document.createElement("div");
       item.className = "feedback-item";
       item.innerHTML = `
         <div>${e.text || "<i>אין טקסט</i>"}</div>
         <div class="feedback-tags">
-          ${e.tags.map(tag => `<span class="tag-pill">${tag}</span>`).join("")}
+          ${e.tags ? e.tags.map(tag => `<span class="tag-pill">${tag}</span>`).join("") : ''}
         </div>
         <div class="feedback-meta-line">
           <span>${e.type === "compliment" ? "👍" : "⚠️"} ${teacher?.name || "מורה"}</span>
-          <span>${formatDateShort(e.date)}</span>
+          <span>${formatDateShort(e.created_at)}</span>
         </div>
       `;
       latestContainer.appendChild(item);
@@ -1643,14 +1787,14 @@
       deleteBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         if (confirm(`למחוק את המורה ${t.name}? כל המשובים עליו יימחקו.`)) {
-          // מחיקת המורה
-          teachers = teachers.filter(teacher => teacher.id !== t.id);
-          // מחיקת המשובים הקשורים
-          feedbackEntries = feedbackEntries.filter(f => f.teacherId !== t.id);
-          
-          await saveAllData();
-          renderAdminScreen();
-          renderTeacherList();
+          const success = await deleteTeacher(t.id);
+          if (success) {
+            await loadData();
+            renderAdminScreen();
+            renderTeacherList();
+          } else {
+            alert("הייתה בעיה במחיקת המורה.");
+          }
         }
       });
       
@@ -1661,7 +1805,8 @@
   // ---------- Event Listeners ----------
   document.addEventListener("DOMContentLoaded", async () => {
     // טעינת נתונים
-    loadData();
+    await loadData();
+    setupRealtimeUpdates();
 
     // Login
     document.getElementById("login-button").addEventListener("click", handleLogin);
@@ -1756,35 +1901,19 @@
 
       const userName = getDisplayNameForUser(appState.currentUser);
 
-      // הוספת המשוב
-      feedbackEntries.push({
+      const success = await saveFeedback({
         teacherId,
         type,
         tags,
         text,
-        date: new Date().toISOString(),
         user: userName
       });
-
-      // עדכון סטטיסטיקות
-      if (!studentStats[userName]) {
-        studentStats[userName] = { compliments: 0, remarks: 0 };
-      }
-      if (type === "compliment") {
-        studentStats[userName].compliments++;
-      } else {
-        studentStats[userName].remarks++;
-      }
-
-      // שמירה
-      const success = saveAllData();
 
       if (success) {
         alert(`${type === "compliment" ? "מחמאה" : "הערה"} נשמרה בהצלחה!`);
         showScreen("teacher-profile");
       } else {
-        alert("הייתה בעיה בשמירה, אבל המשוב נשמר מקומית.");
-        showScreen("teacher-profile");
+        alert("הייתה בעיה בשמירה, נסה שוב.");
       }
     });
 
@@ -1800,25 +1929,23 @@
         return;
       }
 
-      const newId = teachers.length > 0 ? Math.max(...teachers.map(t => t.id)) + 1 : 1;
-      teachers.push({ id: newId, name, subject });
-
-      const success = saveAllData();
+      const newTeacher = await addTeacher(name, subject);
       
-      if (success) {
+      if (newTeacher) {
         nameInput.value = "";
         subjectInput.value = "";
+        await loadData();
         renderAdminScreen();
         renderTeacherList();
         alert("המורה נוסף בהצלחה!");
       } else {
-        alert("הייתה בעיה בשמירה, אבל המורה נוסף מקומית.");
+        alert("הייתה בעיה בהוספת המורה.");
       }
     });
 
     // Help button
     document.getElementById("help-button").addEventListener("click", () => {
-      alert("מערכת משוב למורים\n\n• התחברות עם כל שם משתמש\n• adir/1234 לאדמין\n• כל המשובים נשמרים בדפדפן שלך");
+      alert("מערכת משוב למורים\n\n• התחברות עם כל שם משתמש\n• adir/1234 לאדמין\n• כל המשובים נשמרים ב-Supabase ונראים לכולם");
     });
 
     // Notifications
