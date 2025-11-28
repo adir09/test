@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מערכת משוב למורים</title>
+  <meta name="description" content="מערכת משוב דיגיטלית למורים - אפליקציה לניהול משובים על מורים">
+  <meta name="keywords" content="מורים, משוב, חינוך, ישראל, תלמידים">
+  <meta name="author" content="שם שלך">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <!-- Notifications panel -->
+  <div id="notif-panel" class="notif-panel" aria-hidden="true">
+    <div class="notif-header">
+      <span>התראות</span>
+      <span style="font-size:12px;color:#94a3b8;">סיכום חכם לפי המשובים שלך</span>
+    </div>
+    <div class="notif-sub">אין פה ספאם, רק תובנות קצרות.</div>
+    <div id="notif-list" class="notif-list"></div>
+  </div>
+
+  <!-- Top Bar -->
+  <header class="app-header">
+    <div class="app-header-left">
+      <div class="logo"><i class="fas fa-chalkboard-teacher"></i></div>
+      <div class="app-title">מערכת משוב למורים</div>
+    </div>
+    <div class="app-header-right">
+      <div class="icon-button" title="התראות" id="notif-button">
+        <i class="fas fa-bell"></i>
+        <span id="notif-badge" class="notif-badge" style="display:none;"></span>
+      </div>
+      <div class="user-chip" id="user-chip">
+        <i class="fas fa-user"></i>
+        <span>לא מחובר</span>
+      </div>
+      <div class="icon-button" title="עזרה" id="help-button">
+        <i class="fas fa-question"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="app-main">
+    <!-- All your screen sections here (same as before) -->
+    <!-- Screen: Login -->
+    <section id="screen-login" class="screen active">
+      <!-- ... content unchanged ... -->
+    </section>
+
+    <!-- Screen: Home -->
+    <section id="screen-home" class="screen">
+      <!-- ... content unchanged ... -->
+    </section>
+
+    <!-- Screen: Teacher List -->
+    <section id="screen-teachers" class="screen">
+      <!-- ... content unchanged ... -->
+    </section>
+
+    <!-- Screen: Teacher Profile -->
+    <section id="screen-teacher-profile" class="screen">
+      <!-- ... content unchanged ... -->
+    </section>
+
+    <!-- Screen: Feedback Form -->
+    <section id="screen-feedback" class="screen">
+      <!-- ... content unchanged ... -->
+    </section>
+
+    <!-- Screen: Reports -->
+    <section id="screen-reports" class="screen">
+      <!-- ... content unchanged ... -->
+    </section>
+
+    <!-- Screen: Leaderboard -->
+    <section id="screen-leaderboard" class="screen">
+      <!-- ... content unchanged ... -->
+    </section>
+
+    <!-- Screen: Admin -->
+    <section id="screen-admin" class="screen">
+      <!-- ... content unchanged ... -->
+    </section>
+  </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
